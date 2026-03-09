@@ -1,0 +1,91 @@
+# Ambient Provider Helm Chart Values
+
+# Namespace (update if different from chart installation namespace)
+namespace: fax
+
+# Container images (built in Step 1)
+images:
+  registry: image-registry.openshift-image-registry.svc:5000
+  namespace: fax  # Namespace where images were built
+  pullPolicy: IfNotPresent
+
+  api:
+    repository: ambient-api
+    tag: latest
+
+  ui:
+    repository: ambient-ui
+    tag: latest
+    pullPolicy: Always  # Always pull so rebuilds (ui.dev.Dockerfile) are used
+
+  nginx:
+    repository: ambient-nginx
+    tag: latest
+
+# NVIDIA API Configuration
+nvidia:
+  # Your NVIDIA API key (nvapi-xxxx from build.nvidia.com) - used for cloud LLM and for NVCF Riva if not self-hosted
+  apiKey: ""  # Set via --set or create secret manually
+
+  # Riva ASR: cloud (NVCF) or self-hosted
+  # - Cloud: set selfHostedRiva false, set rivaFunctionId (see README "Get Riva function ID")
+  # - Self-hosted: set selfHostedRiva true and point rivaUri at your in-cluster Riva NIM
+  selfHostedRiva: false
+  rivaUri: "grpc.nvcf.nvidia.com:443"
+  rivaFunctionId: ""  # Sets RIVA_FUNCTION_ID. Required for cloud. List: curl -H "Authorization: Bearer $NVIDIA_API_KEY" "https://api.nvcf.nvidia.com/v2/nvcf/functions?visibility=public&visibility=authorized"
+
+  llmEndpoint: "https://integrate.api.nvidia.com/v1"  # Cloud LLM endpoint (uses apiKey)
+
+  # Model names
+  rivaModel: "parakeet-ctc-1.1b-asr"
+  llmModel: "meta/llama-3.3-nemotron-super-49b-v1"
+
+# Resource limits
+resources:
+  api:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  ui:
+    requests:
+      memory: "384Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  nginx:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# Service configuration
+service:
+  type: ClusterIP
+  api:
+    port: 8000
+  ui:
+    port: 5173  # Vite dev server (ui.dev.Dockerfile)
+  nginx:
+    port: 80
+
+# Route (OpenShift external access)
+route:
+  enabled: true
+  host: ""  # Auto-generated if empty
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+# Replica counts
+replicaCount:
+  api: 1
+  ui: 1
+  nginx: 1

@@ -24,7 +24,7 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    allowedHosts: ['.ngrok-free.app', '.brevlab.com']
+    allowedHosts: ['.ngrok-free.app', '.brevlab.com', '.openshift.com']
   },
   build: {
     outDir: 'dist',

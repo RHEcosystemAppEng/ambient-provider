@@ -1,0 +1,57 @@
+apiVersion: apps.nvidia.com/v1alpha1
+kind: NIMService
+metadata:
+  name: parakeet-nim
+  namespace: nvidia-nim
+spec:
+  authSecret: ngc-api-secret
+
+  image:
+    repository: nvcr.io/nim/nvidia/parakeet-ctc-1.1b-asr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Resource requirements
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+      memory: 32Gi
+    requests:
+      nvidia.com/gpu: 1
+      memory: 16Gi
+
+  # Environment variables
+  env:
+    - name: NGC_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ngc-api-secret
+          key: NGC_API_KEY
+    - name: NIM_GRPC_API_PORT
+      value: "50051"
+    - name: NIM_HTTP_API_PORT
+      value: "9000"
+    - name: NIM_MANIFEST_PROFILE
+      value: "32397eba-43f4-11ef-b63c-1b565d7d9a02"
+
+  # Expose service
+  expose:
+    service:
+      type: ClusterIP
+      port: 8000
+
+  # Storage for model cache - reference pre-created PVC
+  storage:
+    pvc:
+      create: false
+      name: parakeet-nim-pvc
+
+  # Tolerations for GPU nodes
+  tolerations:
+    - key: "g5-gpu"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    - key: "nvidia.com/gpu"
+      operator: "Exists"
+      effect: "NoSchedule"

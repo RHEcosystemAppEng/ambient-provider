@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ambient-provider.fullname" . }}-api
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ambient-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.api.port }}
+    targetPort: {{ .Values.service.api.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ambient-provider.fullname" . }}-ui
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ambient-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.ui.port }}
+    targetPort: {{ .Values.service.ui.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: ui
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ambient-provider.fullname" . }}-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ambient-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: nginx

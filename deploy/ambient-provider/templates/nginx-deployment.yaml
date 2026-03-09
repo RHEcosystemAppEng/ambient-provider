@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ambient-provider.fullname" . }}-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ambient-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx
+spec:
+  replicas: {{ .Values.replicaCount.nginx }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: {{ include "ambient-provider.nginxImage" . }}
+        imagePullPolicy: {{ .Values.images.pullPolicy }}
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        resources:
+          {{- toYaml .Values.resources.nginx | nindent 10 }}
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: {{ include "ambient-provider.fullname" . }}-nginx-config

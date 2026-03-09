@@ -1,0 +1,79 @@
+================================================================================
+  NVIDIA Ambient Provider
+================================================================================
+
+Thank you for installing {{ .Chart.Name }}!
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Values.namespace }}
+
+--------------------------------------------------------------------------------
+Accessing the Application
+--------------------------------------------------------------------------------
+
+{{- if .Values.route.enabled }}
+
+The application is exposed via an OpenShift Route:
+
+{{- if .Values.route.host }}
+  URL: https://{{ .Values.route.host }}
+{{- else }}
+  Get the URL with:
+  echo "https://$(oc get route {{ include "ambient-provider.fullname" . }} -n {{ .Values.namespace }} -o jsonpath='{.spec.host}')"
+{{- end }}
+
+{{- else }}
+
+No Route is configured. To access the application:
+
+1. Port-forward the nginx service:
+   oc port-forward svc/{{ include "ambient-provider.fullname" . }}-nginx -n {{ .Values.namespace }} 8080:80
+
+2. Access at: http://localhost:8080
+
+{{- end }}
+
+--------------------------------------------------------------------------------
+Verifying the Deployment
+--------------------------------------------------------------------------------
+
+Check all pods are running:
+  oc get pods -n {{ .Values.namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Check service health:
+  oc exec -it $(oc get pod -l app.kubernetes.io/component=api -n {{ .Values.namespace }} -o name | head -1) -n {{ .Values.namespace }} -- curl localhost:{{ .Values.service.api.port }}/api/health
+
+View logs:
+  oc logs -f deployment/{{ include "ambient-provider.fullname" . }}-api -n {{ .Values.namespace }}
+
+--------------------------------------------------------------------------------
+Configuration
+--------------------------------------------------------------------------------
+
+NVIDIA Cloud NIMs:
+  - Riva ASR: {{ .Values.nvidia.rivaUri }}
+  - LLM Endpoint: {{ .Values.nvidia.llmEndpoint }}
+  - LLM Model: {{ .Values.nvidia.llmModel }}
+
+Pods:
+  - API: {{ .Values.replicaCount.api }} replica(s)
+  - UI: {{ .Values.replicaCount.ui }} replica(s)
+  - Nginx: {{ .Values.replicaCount.nginx }} replica(s)
+
+--------------------------------------------------------------------------------
+Troubleshooting
+--------------------------------------------------------------------------------
+
+If pods are failing:
+  oc describe pod <pod-name> -n {{ .Values.namespace }}
+  oc logs <pod-name> -n {{ .Values.namespace }}
+
+If API can't connect to NIMs:
+  - Verify NVIDIA_API_KEY and (for cloud Riva) RIVA_FUNCTION_ID are set
+  - Check network access to {{ .Values.nvidia.llmEndpoint }} and grpc.nvcf.nvidia.com:443
+  - If you see "connection attempt timed out" to grpc.nvcf.nvidia.com, check cluster egress (firewall, proxy, NetworkPolicy) allows outbound HTTPS to *.nvcf.nvidia.com
+
+For more information:
+  https://github.com/NVIDIA-AI-Blueprints/ambient-provider
+
+================================================================================

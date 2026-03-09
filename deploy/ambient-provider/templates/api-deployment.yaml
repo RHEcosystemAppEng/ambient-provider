@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ambient-provider.fullname" . }}-api
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ambient-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.replicaCount.api }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "ambient-provider.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: api
+    spec:
+      containers:
+      - name: api
+        image: {{ include "ambient-provider.apiImage" . }}
+        imagePullPolicy: {{ .Values.images.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.api.port }}
+          protocol: TCP
+        env:
+        - name: NVIDIA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ambient-provider.fullname" . }}-nvidia-api-key
+              key: NVIDIA_API_KEY
+        - name: RIVA_URI
+          value: {{ .Values.nvidia.rivaUri | quote }}
+        - name: RIVA_FUNCTION_ID
+          value: {{ .Values.nvidia.rivaFunctionId | default "" | quote }}
+        - name: OPENAI_BASE_URL
+          value: {{ .Values.nvidia.llmEndpoint | quote }}
+        - name: SELF_HOSTED
+          value: {{ .Values.nvidia.selfHostedRiva | default false | quote }}
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          {{- toYaml .Values.resources.api | nindent 10 }}
+      volumes:
+      - name: uploads
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}

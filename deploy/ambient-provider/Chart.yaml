@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ambient-provider
+description: NVIDIA Ambient Provider - Medical transcription and note generation
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
