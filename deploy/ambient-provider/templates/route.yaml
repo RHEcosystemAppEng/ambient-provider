@@ -6,6 +6,11 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "ambient-provider.labels" . | nindent 4 }}
+  annotations:
+    # Long timeout for SSE /api/notes/stream (default is ~30-60s; 1h avoids ERR_INCOMPLETE_CHUNKED_ENCODING)
+    haproxy.router.openshift.io/timeout: 3600s
+    # Tunnel timeout: keeps streaming connection open (client → router → nginx → api)
+    haproxy.router.openshift.io/timeout-tunnel: 3600s
 spec:
   {{- if .Values.route.host }}
   host: {{ .Values.route.host }}
